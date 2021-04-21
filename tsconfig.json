@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "module": "es2020",
+        "lib": [
+            "dom",
+            "es2020"
+        ],
+        "target": "es2015",
+        "sourceMap": true,
+        "strictFunctionTypes": true,
+        "noImplicitAny": true,
+        "preserveConstEnums": true
+    },
+    "include": [
+        "*.ts",
+        "**/*.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "**/node_modules/*"
+    ]
+}

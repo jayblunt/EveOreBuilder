@@ -1,0 +1,10 @@
+**/*.js
+**/*.js.map
+!external/**/*.js
+!external/**/*.js.map
+!external/**/*.d.ts
+!js/**/*.js
+package-lock.json
+node_modules
+tsconfig.tsbuildinfo
+.DS_Store
