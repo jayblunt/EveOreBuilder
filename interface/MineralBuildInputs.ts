@@ -406,28 +406,51 @@ export class MineralBuildInputs implements IInterfaceComponent, IMineralsPublish
     private constructTableHeader(): HTMLTableSectionElement {
         const thead = this.d.createElement('thead')
 
+        const tdIconList = [
+            (function (o): HTMLTableCellElement {
+                return o.d.createElement("th")
+            })(this),
+            (function (o): HTMLTableCellElement {
+                return o.d.createElement("th")
+            })(this),
+            (function (o): HTMLTableCellElement {
+                return o.d.createElement("th")
+            })(this),
+            (function (o): HTMLTableCellElement {
+                return o.d.createElement("th")
+            })(this),
+        ]
+
+        this.eveStaticData.mineralIds.map(mId => {
+            const el = this.d.createElement('img')
+            const th = this.d.createElement('th')
+            el.src = new URL(`${mId}/icon`, new URL("https://images.evetech.net/types/")).toString()
+            th.appendChild(el)
+            tdIconList.push(th)
+        })
+
         const tdList = [
-            (function (o): HTMLTableDataCellElement {
-                const el = o.d.createTextNode("Item Type")
+            (function (o): HTMLTableCellElement {
+                const el = o.d.createTextNode("Category")
                 const th = o.d.createElement('th')
                 th.className = "align_left"
                 th.appendChild(el)
                 return th
             })(this),
-            (function (o): HTMLTableDataCellElement {
-                const el = o.d.createTextNode("Item Name")
+            (function (o): HTMLTableCellElement {
+                const el = o.d.createTextNode("Item")
                 const th = o.d.createElement('th')
                 th.className = "align_left"
                 th.appendChild(el)
                 return th
             })(this),
-            (function (o): HTMLTableDataCellElement {
+            (function (o): HTMLTableCellElement {
                 const el = o.d.createTextNode("Build Quantity")
                 const th = o.d.createElement('th')
                 th.appendChild(el)
                 return th
             })(this),
-            (function (o): HTMLTableDataCellElement {
+            (function (o): HTMLTableCellElement {
                 const el = o.d.createTextNode("BluePrint ME")
                 const th = o.d.createElement('th')
                 th.appendChild(el)
@@ -442,9 +465,15 @@ export class MineralBuildInputs implements IInterfaceComponent, IMineralsPublish
             tdList.push(th)
         })
 
-        const tr = this.d.createElement('tr')
-        tdList.map(x => { tr.appendChild(x); })
-        thead.appendChild(tr)
+
+        const tr1 = this.d.createElement('tr')
+        tdIconList.map(x => { tr1.appendChild(x); })
+        thead.appendChild(tr1)
+
+        const tr2 = this.d.createElement('tr')
+        tdList.map(x => { tr2.appendChild(x); })
+        thead.appendChild(tr2)
+
         return thead
     }
 
@@ -492,14 +521,18 @@ export class MineralBuildInputs implements IInterfaceComponent, IMineralsPublish
 
             const tdList = [
                 this.d.createElement('td'),
-                (function (o): HTMLTableDataCellElement {
+                (function (o): HTMLTableCellElement {
+                    const img = o.d.createElement("img")
+                    img.src = new URL(`${itemId}/icon?size=32`, new URL("https://images.evetech.net/types/")).toString()
                     const el = o.d.createTextNode(itemName)
                     const td = o.d.createElement('td')
                     td.className = "align_left"
+                    td.appendChild(img)
+                    td.appendChild(o.d.createTextNode(" "))
                     td.appendChild(el)
                     return td
                 })(this),
-                (function (o): HTMLTableDataCellElement {
+                (function (o): HTMLTableCellElement {
                     const el = o.d.createElement('input')
                     const el_id = "qty_" + itemId
                     o.elementIdIMap.set(el_id, itemId)
@@ -522,7 +555,7 @@ export class MineralBuildInputs implements IInterfaceComponent, IMineralsPublish
                     td.appendChild(el)
                     return td
                 })(this),
-                (function (o): HTMLTableDataCellElement {
+                (function (o): HTMLTableCellElement {
                     const el = o.d.createElement('input')
                     const el_id = "me_" + itemId
                     o.elementIdIMap.set(el_id, itemId)
@@ -595,7 +628,7 @@ export class MineralBuildInputs implements IInterfaceComponent, IMineralsPublish
 
         const tfoot = this.d.createElement('tfoot')
         let tdList = [
-            (function (o): HTMLTableDataCellElement {
+            (function (o): HTMLTableCellElement {
                 let el = o.d.createTextNode("Total")
                 let td = o.d.createElement('td')
                 td.className = "align_left"

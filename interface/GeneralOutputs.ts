@@ -150,7 +150,7 @@ export class GeneralOutputs implements IInterfaceComponent, IMineralsSubscriber,
                 const isStubOreId = (this.eveStaticData.oreStubIds.indexOf(k) < 0) ? false : true
                 // if (oreTotalCount == 0 && isStubOreId) {
                 if (oreTotalCount == 0) {
-                        displayRow.style.display = ""
+                    displayRow.style.display = ""
                 } else {
                     displayRow.style.display = (quantity == 0) ? "none" : ""
                 }
@@ -195,33 +195,33 @@ export class GeneralOutputs implements IInterfaceComponent, IMineralsSubscriber,
     private constructTableHead(): HTMLTableSectionElement {
         const thead = this.d.createElement('thead')
         const tdList = [
-            (function (o): HTMLTableDataCellElement {
+            (function (o): HTMLTableCellElement {
                 const el = o.d.createTextNode("Ore Name")
                 const th = o.d.createElement('th')
                 th.className = "align_left"
                 th.appendChild(el)
                 return th
             })(this),
-            (function (o): HTMLTableDataCellElement {
+            (function (o): HTMLTableCellElement {
                 const el = o.d.createTextNode("Ore Market Max Price")
                 const th = o.d.createElement('th')
                 th.appendChild(el)
                 return th
             })(this),
-            (function (o): HTMLTableDataCellElement {
+            (function (o): HTMLTableCellElement {
                 const el = o.d.createTextNode("Ore Market Quantity")
                 const th = o.d.createElement('th')
                 th.appendChild(el)
                 return th
             })(this),
-            (function (o): HTMLTableDataCellElement {
+            (function (o): HTMLTableCellElement {
                 const el = o.d.createTextNode("Ore Purchase Quantity")
                 const th = o.d.createElement('th')
                 th.addEventListener('click', function (e) { return o.onUICopyToClipboard(e); })
                 th.appendChild(el)
                 return th
             })(this),
-            (function (o): HTMLTableDataCellElement {
+            (function (o): HTMLTableCellElement {
                 const el = o.d.createTextNode("Ore Total Purchase Price")
                 const th = o.d.createElement('th')
                 th.appendChild(el)
@@ -252,28 +252,32 @@ export class GeneralOutputs implements IInterfaceComponent, IMineralsSubscriber,
                 const isStubOreId = (this.eveStaticData.oreStubIds.indexOf(itemId) < 0) ? false : true
 
                 const tdList = [
-                    (function (o): HTMLTableDataCellElement {
+                    (function (o): HTMLTableCellElement {
+                        const img = o.d.createElement('img')
+                        img.src = new URL(`${itemId}/icon?size=32`, new URL("https://images.evetech.net/types/")).toString()
                         const el = o.d.createTextNode(itemName)
                         const td = o.d.createElement('td')
                         td.className = "align_left"
+                        td.appendChild(img)
+                        td.appendChild(o.d.createTextNode(" "))
                         td.appendChild(el)
                         return td
                     })(this),
-                    (function (o): HTMLTableDataCellElement {
+                    (function (o): HTMLTableCellElement {
                         const el = o.d.createTextNode("0")
                         o.orePriceTextItems.set(itemId, el)
                         const td = o.d.createElement('td')
                         td.appendChild(el)
                         return td
                     })(this),
-                    (function (o): HTMLTableDataCellElement {
+                    (function (o): HTMLTableCellElement {
                         const el = o.d.createTextNode("0")
                         o.oreMaxQuantityTextItems.set(itemId, el)
                         const td = o.d.createElement('td')
                         td.appendChild(el)
                         return td
                     })(this),
-                    (function (o): HTMLTableDataCellElement {
+                    (function (o): HTMLTableCellElement {
                         const el = o.d.createTextNode("0")
                         o.oreQuantityTextItems.set(itemId, el)
                         const td = o.d.createElement('td')
@@ -281,7 +285,7 @@ export class GeneralOutputs implements IInterfaceComponent, IMineralsSubscriber,
                         td.appendChild(el)
                         return td
                     })(this),
-                    (function (o): HTMLTableDataCellElement {
+                    (function (o): HTMLTableCellElement {
                         const el = o.d.createTextNode("0")
                         o.oreCostTextItems.set(itemId, el)
                         const td = o.d.createElement('td')
@@ -306,7 +310,7 @@ export class GeneralOutputs implements IInterfaceComponent, IMineralsSubscriber,
 
         const tfoot = this.d.createElement('tfoot')
         let tdList = [
-            (function (o): HTMLTableDataCellElement {
+            (function (o): HTMLTableCellElement {
                 let el = o.d.createTextNode("Total")
                 let td = o.d.createElement('td')
                 td.className = "align_left"
@@ -315,7 +319,7 @@ export class GeneralOutputs implements IInterfaceComponent, IMineralsSubscriber,
             })(this),
             this.d.createElement('td'),
             this.d.createElement('td'),
-            (function (o): HTMLTableDataCellElement {
+            (function (o): HTMLTableCellElement {
                 const el = o.d.createElement('input')
                 el.type = "button"
                 el.value = "Copy to Clipboard"
@@ -326,7 +330,7 @@ export class GeneralOutputs implements IInterfaceComponent, IMineralsSubscriber,
                 td.appendChild(el)
                 return td
             })(this),
-            (function (o): HTMLTableDataCellElement {
+            (function (o): HTMLTableCellElement {
                 let el = o.d.createTextNode("0")
                 let td = o.d.createElement('td')
                 o.oreTotalCostText = el

@@ -20,19 +20,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import sys, os, re
-import logging, inspect
-import pprint as pp
-import configparser
 import argparse
+import configparser
 import enum
-import functools, itertools
+import functools
+import inspect
+import itertools
+import logging
+import os
+import pprint as pp
+import re
+import sys
+
 import simplejson as json
 import sqlalchemy
 import sqlalchemy.ext.declarative
 import sqlalchemy.pool
-
-
 
 
 class OutputFormat(enum.Enum):
@@ -48,8 +51,6 @@ class OutputFormat(enum.Enum):
             return OutputFormat.CSV
         elif input == "txt":
             return OutputFormat.TXT
-
-
 
 
 class DB(object):
@@ -72,7 +73,8 @@ class DB(object):
                 sqlalchemy.Column(
                     "typeID", sqlalchemy.INTEGER(), index=True, primary_key=True
                 ),
-                sqlalchemy.Column("activityID", sqlalchemy.INTEGER(), primary_key=True),
+                sqlalchemy.Column(
+                    "activityID", sqlalchemy.INTEGER(), primary_key=True),
                 sqlalchemy.Column(
                     "productTypeID", sqlalchemy.INTEGER(), index=True, primary_key=True
                 ),
@@ -82,7 +84,8 @@ class DB(object):
                 sqlalchemy.Column(
                     "typeID", sqlalchemy.INTEGER(), index=True, primary_key=True
                 ),
-                sqlalchemy.Column("activityID", sqlalchemy.INTEGER(), primary_key=True),
+                sqlalchemy.Column(
+                    "activityID", sqlalchemy.INTEGER(), primary_key=True),
                 sqlalchemy.Column(
                     "materialTypeID", sqlalchemy.INTEGER(), primary_key=True
                 ),
@@ -97,7 +100,8 @@ class DB(object):
     InventoryCategories = type("InventoryCategories", (object,), {})
     InventoryTypeMaterials = type("InventoryTypeMaterials", (object,), {})
     IndustryActivityProducts = type("IndustryActivityProducts", (object,), {})
-    IndustryActivityMaterials = type("IndustryActivityMaterials", (object,), {})
+    IndustryActivityMaterials = type(
+        "IndustryActivityMaterials", (object,), {})
 
     def __init__(self, configuration, enable_echo=False):
         self.schema = configuration.get("schema")
@@ -131,8 +135,6 @@ class DB(object):
                 ),
             )
         self.session = sqlalchemy.orm.sessionmaker(bind=self.engine)()
-
-
 
 
 class QueryWrapper(object):
@@ -262,15 +264,13 @@ class QueryWrapper(object):
         return ore_mineral_yield
 
 
-
-
 class Defaults(object):
 
     region_info = {
-            "10000002": { "regionName": "The Forge" },
-            "10000032": { "regionName": "Sinq Laison" },
-            "10000043": { "regionName": "Domain" },
-            "10000030": { "regionName": "Heimatar" }
+        "10000002": {"regionName": "The Forge"},
+        "10000032": {"regionName": "Sinq Laison"},
+        "10000043": {"regionName": "Domain"},
+        "10000030": {"regionName": "Heimatar"}
     }
 
     station_info = {
@@ -339,8 +339,6 @@ class Defaults(object):
     ]
 
 
-
-
 def sorted_ores(orenames, name_to_id):
     stub_to_names = dict()
     stub_to_root = dict()
@@ -368,14 +366,13 @@ def sorted_ores(orenames, name_to_id):
     return sorted_oreids
 
 
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "-c",
     "--config",
     dest="config",
-    default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "evesde.cfg"),
+    default=os.path.join(os.path.dirname(
+        os.path.realpath(__file__)), "evemarket.cfg"),
     help="specify config file",
     metavar="FILE",
 )
@@ -393,24 +390,26 @@ args = parser.parse_args()
 output_format = OutputFormat.map(args.format)
 
 config = configparser.ConfigParser()
-config.read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "evesde.cfg"))
+config.read(os.path.join(os.path.dirname(
+    os.path.realpath(__file__)), "evemarket.cfg"))
 
 db = DB(config["evesde"], enable_echo=False)
 
 
-
-
 wrapper = QueryWrapper(db)
 
-build_groupids = wrapper.groupnames_to_groupids(Defaults.build_item_group_names)
+build_groupids = wrapper.groupnames_to_groupids(
+    Defaults.build_item_group_names)
 
 
 build_typeids = wrapper.groupids_to_typeids(build_groupids)
 
 # Manually remove some .. bad yamlloader data
 skip_item_typeids = wrapper.names_to_typeids(Defaults.skip_item_names)
-skip_item_names = set([v for k, v in wrapper.typeids_to_namedict(skip_item_typeids).items()])
-skip_missed_names = skip_item_names.symmetric_difference(set(Defaults.skip_item_names))
+skip_item_names = set(
+    [v for k, v in wrapper.typeids_to_namedict(skip_item_typeids).items()])
+skip_missed_names = skip_item_names.symmetric_difference(
+    set(Defaults.skip_item_names))
 if len(skip_missed_names) > 0:
     print(skip_missed_names)
     exit(-1)
@@ -418,8 +417,7 @@ if len(skip_missed_names) > 0:
 build_typeids = build_typeids - skip_item_typeids
 
 
-
-# ids for Minerals 
+# ids for Minerals
 mineral_typeids = set(wrapper.groupids_to_typeids(
     wrapper.groupnames_to_groupids(["Mineral"]), [0]
 ))
@@ -432,8 +430,8 @@ capital_component_typeids = set(wrapper.groupids_to_typeids(
     wrapper.groupnames_to_groupids(["Capital Construction Components"]), [0]
 ))
 print()
-print("capital_component_typeids:{}".format(sorted(list(capital_component_typeids))))
-
+print("capital_component_typeids:{}".format(
+    sorted(list(capital_component_typeids))))
 
 
 mineral_only_itemids = set()
@@ -459,10 +457,12 @@ while len(outstanding_items) > 0:
         if k in build_typeids:
             if v_keys.issubset(mineral_typeids):
                 mineral_only_itemids.add(k)
-                required_mineral_typeids = required_mineral_typeids.union(v_keys)
+                required_mineral_typeids = required_mineral_typeids.union(
+                    v_keys)
             elif v_keys.issubset(capital_component_typeids):
                 capital_component_only_itemids.add(k)
-                required_capital_component_typeids = required_capital_component_typeids.union(v_keys)
+                required_capital_component_typeids = required_capital_component_typeids.union(
+                    v_keys)
     # print("{} -> {}".format(len(outstanding_items), len(new_ids)))
     all_ids = all_ids.union(outstanding_items).union(new_ids)
     outstanding_items = new_ids
@@ -473,7 +473,8 @@ capital_component_typeids = required_capital_component_typeids
 
 print()
 print("mineral_typeids:{}".format(sorted(list(mineral_typeids))))
-print("capital_component_typeids:{}".format(sorted(list(capital_component_typeids))))
+print("capital_component_typeids:{}".format(
+    sorted(list(capital_component_typeids))))
 
 print()
 print("mineral_only_itemids:{}".format(sorted(list(mineral_only_itemids))))
@@ -481,9 +482,7 @@ print("all_item_requirements:{}".format(len(all_item_requirements.keys())))
 print("all_requirement_ids:{}".format(len(all_ids)))
 
 
-
-
-## Which ores *only* yield minerals
+# Which ores *only* yield minerals
 ore_yields = wrapper.ore_yields()
 
 mineral_only_oreids = set()
@@ -494,10 +493,9 @@ for k, v in ore_yields.items():
         mineral_only_oreids.add(k)
 
 
-
 # Item and Group info
 for s in [all_item_requirements.keys(), ore_yields.keys(), all_ore_yield_typeids, mineral_typeids]:
-    all_ids = all_ids.union(s)    
+    all_ids = all_ids.union(s)
 
 print("all_ids:{}".format(len(all_ids)))
 
@@ -521,17 +519,19 @@ for o in (
 
 group_info = dict()
 for k, v in wrapper.groupids_to_namedict(item_groupids).items():
-    group_info[k] = { 'n': v }
-
+    group_info[k] = {'n': v}
 
 
 # Order the ids in the order we want to present them. THe UI just renders the items in the order
 # they appear in this data
 groupid_to_typeids_cache = dict()
-groupname_to_groupid = {v: k for k, v in wrapper.groupids_to_namedict(build_groupids).items()}
+groupname_to_groupid = {
+    v: k for k, v in wrapper.groupids_to_namedict(build_groupids).items()}
 groupid_to_groupname = {v: k for k, v in groupname_to_groupid.items()}
-ordered_build_groupids = ([groupname_to_groupid[x] for x in Defaults.build_item_group_names])
-groupid_to_typeids_cache[groupname_to_groupid["Capital Construction Components"]] = capital_component_typeids
+ordered_build_groupids = ([groupname_to_groupid[x]
+                          for x in Defaults.build_item_group_names])
+groupid_to_typeids_cache[groupname_to_groupid["Capital Construction Components"]
+                         ] = capital_component_typeids
 
 ordered_mineral_build_typeids = list()
 orderd_all_shipids = list()
@@ -545,7 +545,8 @@ for groupid in ordered_build_groupids:
         continue
 
     group_itemname_to_itemid = wrapper.typeids_to_namedict(group_typeids)
-    group_itemname_to_itemid = {v:k for k, v in group_itemname_to_itemid.items()}
+    group_itemname_to_itemid = {v: k for k,
+                                v in group_itemname_to_itemid.items()}
 
     sorted_itemnames = sorted(group_itemname_to_itemid.keys())
     sorted_itemids = [group_itemname_to_itemid[x] for x in sorted_itemnames]
@@ -564,14 +565,16 @@ print()
 print("{}:{}".format('ordered_mineral_build_typeids', ordered_mineral_build_typeids))
 
 
-
 # Order the mineral ids in the order we want to present them
-orenames_to_oreids = {v: k for k, v in wrapper.typeids_to_namedict(mineral_only_oreids).items()}
-compressed_orenames = [x for x in filter(lambda x: x.split()[0] == "Compressed", orenames_to_oreids.keys())]
+orenames_to_oreids = {v: k for k, v in wrapper.typeids_to_namedict(
+    mineral_only_oreids).items()}
+compressed_orenames = [x for x in filter(
+    lambda x: x.split()[0] == "Compressed", orenames_to_oreids.keys())]
 sorted_mineral_oreids = sorted_ores(compressed_orenames, orenames_to_oreids)
-ordered_mineral_oreids_stubs = [y for y in map(lambda x: x[0], [x for x in filter(lambda x: x[1], sorted_mineral_oreids)])]
-ordered_mineral_oreids_list = [y for y in map(lambda x: x[0], [x for x in filter(lambda x: True, sorted_mineral_oreids)])]
-
+ordered_mineral_oreids_stubs = [y for y in map(
+    lambda x: x[0], [x for x in filter(lambda x: x[1], sorted_mineral_oreids)])]
+ordered_mineral_oreids_list = [y for y in map(
+    lambda x: x[0], [x for x in filter(lambda x: True, sorted_mineral_oreids)])]
 
 
 with open("{:s}.{:s}".format(args.output, args.format), "w") as ofp:
@@ -590,4 +593,3 @@ with open("{:s}.{:s}".format(args.output, args.format), "w") as ofp:
             "regionInfo": Defaults.region_info
         }
         json.dump(o, ofp)
-
