@@ -4,6 +4,8 @@
 Requires a dump of the Eve SDE from [@fuzzysteve](https://github.com/fuzzysteve/yamlloader) (available at [www.fuzzwork.co.uk/dump/](https://www.fuzzwork.co.uk/dump/)) and the [Linear Programming Solver](https://github.com/JWally/jsLPSolver) from [@JWally](https://github.com/JWally).
 A minimal TypeScript stub for the solver is included.
 
+See [https://www.castabouts.net/](https://www.castabouts.net/) for a running example.
+
 ### Supported Ship Types
 - T1 and Faction ships that can be built entirely from base minerals
 - ~~Capitals that can be built entirely from Capital Construction Components (which can be built entirely from base minerals)~~ - 2021/04 Industry changes broke this..
