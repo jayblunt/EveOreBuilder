@@ -154,7 +154,7 @@ export class EveCalculator implements IEveCalculator, ITranscriptServiceConsumer
         })
 
         // See https://github.com/JWally/jsLPSolver for examples
-        const optVars = new Map(this.eveStaticData.oreIds
+        const optVariables = new Map(this.eveStaticData.oreIds
             .filter((oreId, i) => oreMarketSizes[i] > 0)
             .map((oreId, i) => {
                 let m = new Map(this.eveStaticData.mineralIds.map((mineralId, j) => {
@@ -176,7 +176,8 @@ export class EveCalculator implements IEveCalculator, ITranscriptServiceConsumer
         this.eveStaticData.oreIds
             .filter((oreId, i) => oreMarketSizes[i] > 0)
             .map((x, i) => {
-                optConstraints.set(x, new Map([['min', 0], ['max', oreMarketSizes[i]]]))
+                const portionSize = this.eveStaticData.orePortionSizes[i]
+                optConstraints.set(x, new Map([['min', 0], ['max', oreMarketSizes[i] / portionSize]]))
             })
 
 
@@ -188,14 +189,23 @@ export class EveCalculator implements IEveCalculator, ITranscriptServiceConsumer
             // .map((x, i) => { console.log(x); return x; })
             .sort((a, b) => b[1] - a[1])
             .map((x) => x[0])
-        const optIntegers = new Map(oreReverseSortedPriceList.map((x, i) => [x, i < solverGoesNutsMaxInt ? 1 : 0]))
+        const tmpOptInts = new Map(oreReverseSortedPriceList.map((x, i) => [x, i < solverGoesNutsMaxInt ? 1 : 0]))
+        const optInts = new Map()
+        tmpOptInts.forEach((v, k) => {
+            if (v > 0) {
+                optInts.set(k, v)
+            }
+        })
 
         const optModel = this._toObject(new Map<string, any>([
             ['optimize', '_price'],
             ['opType', 'min'],
             ['constraints', optConstraints],
-            ['variables', optVars],
-            ['ints', optIntegers],
+            ['variables', optVariables],
+            ['ints', optInts],
+            ['options', {
+                'tolerance': 0.01
+            }],
         ]))
 
         if (this.debug) console.log(JSON.stringify(optModel).toString())
@@ -208,7 +218,9 @@ export class EveCalculator implements IEveCalculator, ITranscriptServiceConsumer
             Object.entries(optResult)
                 .filter((x) => this.eveStaticData.oreIds.indexOf(x[0]) >= 0)
                 .map((x) => {
-                    allRequiredOres.set(x[0], Math.ceil(Number.parseFloat(x[1] as string)))
+                    const i = this.eveStaticData.oreIds.indexOf(x[0])
+                    const portionSize = this.eveStaticData.orePortionSizes[i]
+                    allRequiredOres.set(x[0], portionSize * Math.ceil(Number.parseFloat(x[1] as string)))
                 })
         }
 

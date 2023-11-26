@@ -36,6 +36,7 @@ export default interface IEveStaticData {
     oreIds: Array<string>
     oreNames: Array<string>
     oreStubIds: Array<string>
+    orePortionSizes: Array<number>
     oreFullYields: TEveStaticDataItemYields
 
     stationIds: Array<string>
@@ -45,13 +46,22 @@ export default interface IEveStaticData {
     itemRequirements(itemId: string): Map<string, number>
 }
 
-type TEveStaticDataItemInfo = Map<string, { n: string, v: number, pv: number, gid: number, mid: number }>
+interface IEveStaticDataItem {
+    n: string;
+    v: number;
+    pv: number;
+    gid: number;
+    mid: number;
+    ps: number
+}
+type TEveStaticDataItemInfo = Map<string, IEveStaticDataItem>
 type TEveStaticDataGroupInfo = Map<string, { n: string }>
 type TEveStaticDataStationInfo = Map<string, { stationName: string, regionID: string }>
 type TEveStaticDataRegionInfo = Map<string, { n: string }>
 export type TEveStaticDataItemYields = Map<string, Map<string, number>>
 type TEveStaticDataItemRequirements = Map<string, Map<string, number>>
 type TEveStaticDataItemList = Array<string>
+type TEveStaticDataBuildInfo = Map<string, string>
 
 export class EveStaticData implements ITranscriptServiceConsumer, IEveStaticData {
     private readonly storage: Storage
@@ -68,6 +78,7 @@ export class EveStaticData implements ITranscriptServiceConsumer, IEveStaticData
     private staticMineralOreStubIds: TEveStaticDataItemList | undefined = undefined
     private staticShipIds: TEveStaticDataItemList | undefined = undefined
     private staticRegionInfo: TEveStaticDataRegionInfo | undefined = undefined
+    private staticBuildInfo: TEveStaticDataBuildInfo | undefined = undefined
 
     private readonly cache: {
         buildIds: Array<string> | undefined
@@ -86,6 +97,7 @@ export class EveStaticData implements ITranscriptServiceConsumer, IEveStaticData
         oreStubIds: Array<string> | undefined
         oreNames: Array<string> | undefined
         orePackagedVolumes: Array<number> | undefined
+        orePortionSizes: Array<number> | undefined
         oreFullYields: TEveStaticDataItemYields | undefined
 
         stationIds: Array<string> | undefined
@@ -112,6 +124,7 @@ export class EveStaticData implements ITranscriptServiceConsumer, IEveStaticData
             oreStubIds: undefined,
             oreNames: undefined,
             orePackagedVolumes: undefined,
+            orePortionSizes: undefined,
             oreFullYields: undefined,
 
             stationIds: undefined,
@@ -220,6 +233,13 @@ export class EveStaticData implements ITranscriptServiceConsumer, IEveStaticData
         return this.cache.orePackagedVolumes
     }
 
+    public get orePortionSizes(): Array<number> {
+        if (this.cache.orePortionSizes === undefined) {
+            this.cache.orePortionSizes = Array.from(this.oreIds.map(x => this.staticItemInfo.get(x).ps))
+        }
+        return this.cache.orePortionSizes
+    }
+
     public get oreFullYields(): TEveStaticDataItemYields {
         if (this.cache.oreFullYields === undefined) {
             this.cache.oreFullYields = new Map(this.oreIds.map(x => {
@@ -261,22 +281,24 @@ export class EveStaticData implements ITranscriptServiceConsumer, IEveStaticData
 
     // Fetch a set of pages from https://esi.evetech.net/ui/.
     // The first page has a x-pages header that we use to fetch the rest of the data
-    protected async cachedFetch(requestUrl: URL): Promise<any> {
+    protected async cachedFetch(requestUrl: URL, force: boolean = false): Promise<any> {
 
         const requestHeaders: { [key: string]: string } = {}
         let responseData = undefined
 
-        const cachedString = this.storage.getItem(requestUrl.toString())
-        if (cachedString) {
-            const cachedData: { data: string, etag: string } = JSON.parse(cachedString)
-            const cacheDataKeys = Array.from(Object.keys(cachedData))
-            if (cacheDataKeys.indexOf('etag') >= 0 && cacheDataKeys.indexOf('data') >= 0) {
-                if (cachedData.etag.length > 0 && cachedData.data.length > 0) {
-                    requestHeaders['If-None-Match'] = cachedData.etag
-                    // responseData = JSON.parse(cachedData.data)
-                    responseData = cachedData.data
-                } else {
-                    this.storage.removeItem(requestUrl.toString())
+        if (force == false && this.storage !== undefined) {
+            const cachedString = this.storage.getItem(requestUrl.toString())
+            if (cachedString) {
+                const cachedData: { data: string, etag: string } = JSON.parse(cachedString)
+                const cacheDataKeys = Array.from(Object.keys(cachedData))
+                if (cacheDataKeys.indexOf('etag') >= 0 && cacheDataKeys.indexOf('data') >= 0) {
+                    if (cachedData.etag.length > 0 && cachedData.data.length > 0) {
+                        requestHeaders['If-None-Match'] = cachedData.etag
+                        // responseData = JSON.parse(cachedData.data)
+                        responseData = cachedData.data
+                    } else {
+                        this.storage.removeItem(requestUrl.toString())
+                    }
                 }
             }
         }
@@ -288,10 +310,12 @@ export class EveStaticData implements ITranscriptServiceConsumer, IEveStaticData
             if (200 == response.status) {
                 const etag = response.headers.get('etag')
                 responseData = await response.json()
-                if (etag !== undefined && responseData !== undefined) {
+                if (etag != null && responseData !== undefined) {
                     if (etag.length > 0 && responseData.length > 0) {
                         const cachedString = JSON.stringify({ etag: etag, data: responseData })
-                        this.storage.setItem(requestUrl.toString(), cachedString)
+                        if (this.storage !== undefined) {
+                            this.storage.setItem(requestUrl.toString(), cachedString)
+                        }
                     }
                 }
             }
@@ -305,10 +329,10 @@ export class EveStaticData implements ITranscriptServiceConsumer, IEveStaticData
         // console.log(baseUrl.toString())
 
         if (this.transcriptService) {
-            this.transcriptService.addMessage("loading static data")
+            this.transcriptService.addMessage("loading static data from " + baseUrl)
         }
 
-        await this.cachedFetch(baseUrl)
+        await this.cachedFetch(baseUrl, true)
             .then(staticData => {
                 function objectToMap(o: { [key: string]: any }, shallow: boolean = false): Map<any, any> {
                     let m = new Map()
@@ -322,44 +346,66 @@ export class EveStaticData implements ITranscriptServiceConsumer, IEveStaticData
                     return m
                 }
 
-                const actualStaticDataKeys: Array<string> = Array.from(Object.keys(staticData))
-                const missingStaticDataKeys: Array<string> = []
-                const reqiredStaticDataKeys: Array<string> = Array.from([
-                    "itemInfo",
-                    "groupInfo",
-                    "itemYields",
-                    "itemRequirements",
-                    "shipIds",
-                    "mineralBuildIds",
-                    "mineralOreIds",
-                    "mineralOreStubIds",
-                    "mineralIds",
-                    "stationInfo",
-                    "regionInfo"
-                ])
-                reqiredStaticDataKeys.map((k) => {
-                    if (actualStaticDataKeys.indexOf(k) < 0) {
-                        missingStaticDataKeys.push(k)
+                if (staticData === undefined) {
+                    if (this.transcriptService) {
+                        this.transcriptService.addMessage("static data not available")
                     }
-                })
-                if (missingStaticDataKeys.length > 0) {
-                    console.log("missingStaticDataKeys:" + missingStaticDataKeys)
-                }
+                } else {
 
-                this.staticItemInfo = <TEveStaticDataItemInfo>objectToMap(staticData.itemInfo, true)
-                this.staticGroupInfo = <TEveStaticDataGroupInfo>objectToMap(staticData.groupInfo, true)
-                this.staticItemYields = <TEveStaticDataItemYields><unknown>objectToMap(staticData.itemYields)
-                this.staticItemRequirements = <TEveStaticDataItemRequirements><unknown>objectToMap(staticData.itemRequirements)
-                this.staticShipIds = <TEveStaticDataItemList>Array.from(staticData.shipIds).map((x) => x.toString())
-                this.staticMineralBuildIds = <TEveStaticDataItemList>Array.from(staticData.mineralBuildIds).map((x) => x.toString())
-                this.staticMineralOreIds = <TEveStaticDataItemList>Array.from(staticData.mineralOreIds).map((x) => x.toString())
-                this.staticMineralOreStubIds = <TEveStaticDataItemList>Array.from(staticData.mineralOreStubIds).map((x) => x.toString())
-                this.staticMineralIds = <TEveStaticDataItemList>Array.from(staticData.mineralIds).map((x) => x.toString())
-                this.staticStationInfo = <TEveStaticDataStationInfo>objectToMap(staticData.stationInfo, true)
-                this.staticRegionInfo = <TEveStaticDataRegionInfo>objectToMap(staticData.regionInfo, true)
 
-                if (this.transcriptService) {
-                    this.transcriptService.addMessage("static data loaded")
+                    try {
+
+                        console.log(`staticData: ${staticData}`)
+                        const actualStaticDataKeys: Array<string> = Array.from(Object.keys(staticData))
+                        const missingStaticDataKeys: Array<string> = []
+                        const reqiredStaticDataKeys: Array<string> = Array.from([
+                            "itemInfo",
+                            "groupInfo",
+                            "itemYields",
+                            "itemRequirements",
+                            "shipIds",
+                            "mineralBuildIds",
+                            "mineralOreIds",
+                            "mineralOreStubIds",
+                            "mineralIds",
+                            "stationInfo",
+                            "regionInfo",
+                            "buildInfo"
+                        ])
+
+                        reqiredStaticDataKeys.map((k) => {
+                            if (actualStaticDataKeys.indexOf(k) < 0) {
+                                missingStaticDataKeys.push(k)
+                            }
+                        })
+
+                        if (missingStaticDataKeys.length > 0) {
+                            console.log("missingStaticDataKeys:" + missingStaticDataKeys)
+                        }
+
+                        this.staticItemInfo = <TEveStaticDataItemInfo>objectToMap(staticData.itemInfo, true)
+                        this.staticGroupInfo = <TEveStaticDataGroupInfo>objectToMap(staticData.groupInfo, true)
+                        this.staticItemYields = <TEveStaticDataItemYields><unknown>objectToMap(staticData.itemYields)
+                        this.staticItemRequirements = <TEveStaticDataItemRequirements><unknown>objectToMap(staticData.itemRequirements)
+                        this.staticShipIds = <TEveStaticDataItemList>Array.from(staticData.shipIds).map((x) => x.toString())
+                        this.staticMineralBuildIds = <TEveStaticDataItemList>Array.from(staticData.mineralBuildIds).map((x) => x.toString())
+                        this.staticMineralOreIds = <TEveStaticDataItemList>Array.from(staticData.mineralOreIds).map((x) => x.toString())
+                        this.staticMineralOreStubIds = <TEveStaticDataItemList>Array.from(staticData.mineralOreStubIds).map((x) => x.toString())
+                        this.staticMineralIds = <TEveStaticDataItemList>Array.from(staticData.mineralIds).map((x) => x.toString())
+                        this.staticStationInfo = <TEveStaticDataStationInfo>objectToMap(staticData.stationInfo, true)
+                        this.staticRegionInfo = <TEveStaticDataRegionInfo>objectToMap(staticData.regionInfo, true)
+                        this.staticBuildInfo = <TEveStaticDataBuildInfo>objectToMap(staticData.buildInfo, true)
+
+                        if (this.transcriptService) {
+                            this.transcriptService.addMessage("static data loaed. version: " + this.staticBuildInfo.get("date"))
+                        }
+
+                    }
+                    catch (e) {
+                        if (this.transcriptService) {
+                            this.transcriptService.addMessage(e)
+                        }
+                    }
                 }
             })
         return this
