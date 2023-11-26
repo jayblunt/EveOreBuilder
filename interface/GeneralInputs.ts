@@ -211,14 +211,14 @@ export class GeneralInputs implements IInterfaceComponent, IReprocessingEfficien
 
         if (true) {
             const trList = [
-                (function (o): HTMLTableDataCellElement {
+                (function (o): HTMLTableCellElement {
                     const el = o.d.createTextNode("Reprocessing Efficiency")
                     const td = o.d.createElement('td')
                     td.className = "align_left"
                     td.appendChild(el)
                     return td
                 })(this),
-                (function (o): HTMLTableDataCellElement {
+                (function (o): HTMLTableCellElement {
                     const el = o.d.createElement('input')
                     el.title = "Reprocessing Efficiency"
                     el.type = "number"
@@ -243,14 +243,14 @@ export class GeneralInputs implements IInterfaceComponent, IReprocessingEfficien
 
         if (true) {
             const trList = [
-                (function (o): HTMLTableDataCellElement {
+                (function (o): HTMLTableCellElement {
                     const el = o.d.createTextNode("Number of Market Orders to lift")
                     const td = o.d.createElement('td')
                     td.className = "align_left"
                     td.appendChild(el)
                     return td
                 })(this),
-                (function (o): HTMLTableDataCellElement {
+                (function (o): HTMLTableCellElement {
                     const el = o.d.createElement('input')
                     el.title = "Number of Market Orders to lift"
                     el.type = "number"
@@ -275,14 +275,14 @@ export class GeneralInputs implements IInterfaceComponent, IReprocessingEfficien
 
         if (true) {
             const trList = [
-                (function (o): HTMLTableDataCellElement {
+                (function (o): HTMLTableCellElement {
                     const el = o.d.createTextNode("Pricing Station")
                     const td = o.d.createElement('td')
                     td.className = "align_left"
                     td.appendChild(el)
                     return td
                 })(this),
-                (function (o): HTMLTableDataCellElement {
+                (function (o): HTMLTableCellElement {
                     const el = o.d.createElement('select')
                     el.title = "Pricing Station"
                     const oe_list: Array<HTMLOptionElement> = []

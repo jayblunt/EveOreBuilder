@@ -41,6 +41,7 @@ export class CharacterInfo implements IInterfaceComponent, ITranscriptServiceCon
         this.d = d
     }
 
+
     public addTranscriptProvider(provider: ITranscriptServiceProvider): void {
         this.transcriptService = provider
     }
