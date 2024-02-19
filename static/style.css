@@ -115,7 +115,7 @@ tfoot .align_left {
     background-color: var(--background-color);
     border: 2px solid var(--foreground-color);
     opacity: 0.7;
-    transition: 0.2s all;
+    /* transition: 0.2s all; */
 }
 
 .box:hover,

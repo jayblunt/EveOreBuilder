@@ -135,10 +135,10 @@ export class EveCalculator implements IEveCalculator, ITranscriptServiceConsumer
             allMineralTotalCount += v
         })
 
-        const allRequiredOres: Map<string, number> = new Map(this.eveStaticData.oreIds.map((x) => [x, 0]))
+        const resultRequiredOres: Map<string, number> = new Map(this.eveStaticData.oreIds.map((x) => [x, 0]))
 
         if (allMineralTotalCount == 0) {
-            return allRequiredOres
+            return resultRequiredOres
         }
 
         if (this.debug) console.log(["totalRequiredMinerals", totalRequiredMinerals]);
@@ -214,14 +214,33 @@ export class EveCalculator implements IEveCalculator, ITranscriptServiceConsumer
 
         const resultFeasible = Object.entries(optResult).filter((x) => x[0] == 'feasible').map((x) => x[1])[0]
 
+        const resultActualMinerals: Map<string, number> = new Map()
         if (resultFeasible) {
             Object.entries(optResult)
                 .filter((x) => this.eveStaticData.oreIds.indexOf(x[0]) >= 0)
                 .map((x) => {
-                    const i = this.eveStaticData.oreIds.indexOf(x[0])
-                    const portionSize = this.eveStaticData.orePortionSizes[i]
-                    allRequiredOres.set(x[0], portionSize * Math.ceil(Number.parseFloat(x[1] as string)))
+                    const oreId = x[0]
+                    const idx = this.eveStaticData.oreIds.indexOf(oreId)
+                    const portionSize = this.eveStaticData.orePortionSizes[idx]
+                    const requiredQty = Math.ceil(Number.parseFloat(x[1] as string))
+                    resultRequiredOres.set(x[0], requiredQty)
+                    if (this.debug) console.log(`oreId:${oreId}, requiredQty:${requiredQty}`)
+
+                    // Increment the actual minerals from this result.
+                    oreActualYields.get(oreId).forEach((actualMineralQty, actualMineralId) => {
+                        if (this.debug) console.log(`oreId:${oreId}, actualMineralId:${actualMineralId}, actualMineralQty:${actualMineralQty}`)
+                        resultActualMinerals.set(actualMineralId, (resultActualMinerals.get(actualMineralId) || 0) + actualMineralQty * requiredQty)
+                    })
                 })
+        }
+
+        if (this.debug) {
+            const resultExcessMinerals: Map<string, number> = new Map()
+            totalRequiredMinerals.forEach((v, k) => {
+                resultExcessMinerals.set(k, resultActualMinerals.get(k) - v)
+            })
+            console.log(["resultActualMinerals", resultActualMinerals])
+            console.log(["resultExcessMinerals", resultExcessMinerals])
         }
 
         if (this.transcriptService) {
@@ -230,7 +249,7 @@ export class EveCalculator implements IEveCalculator, ITranscriptServiceConsumer
             }
         }
 
-        return allRequiredOres
+        return resultRequiredOres
     }
 
 }
